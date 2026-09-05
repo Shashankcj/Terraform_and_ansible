@@ -1,0 +1,16 @@
+---
+- import_playbook: set-hostname.yml
+
+- import_playbook: check-k8s.yml
+
+- import_playbook: install-kube-vip.yml
+
+- import_playbook: init-control-plane.yml
+
+- import_playbook: join-workers.yml
+
+- import_playbook: check-cluster.yml
+
+- import_playbook: check-nodes.yml
+
+- import_playbook: register-argocd-cluster.yml

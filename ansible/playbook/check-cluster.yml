@@ -1,0 +1,26 @@
+---
+- name: Verify Kubernetes cluster
+  hosts: control_plane
+  become: true
+
+  tasks:
+
+    - name: Check Kubernetes nodes
+      ansible.builtin.command: kubectl get nodes
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: nodes
+
+    - name: Show nodes
+      ansible.builtin.debug:
+        var: nodes.stdout_lines
+
+    - name: Check kube-vip pod
+      ansible.builtin.command: kubectl get pods -n kube-system
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: pods
+
+    - name: Show kube-system pods
+      ansible.builtin.debug:
+        var: pods.stdout_lines

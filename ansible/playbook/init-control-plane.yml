@@ -1,0 +1,15 @@
+---
+- name: Initialize Kubernetes control plane
+  hosts: control_plane
+  become: true
+
+  tasks:
+
+    - name: Initialize Kubernetes cluster
+      ansible.builtin.command: >
+        kubeadm init
+        --control-plane-endpoint=10.99.1.249:6443
+        --apiserver-advertise-address={{ ansible_host }}
+        --cri-socket=unix:///run/containerd/containerd.sock
+      args:
+        creates: /etc/kubernetes/admin.conf

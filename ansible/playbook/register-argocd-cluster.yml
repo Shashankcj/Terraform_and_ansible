@@ -1,0 +1,49 @@
+---
+- name: Fetch kubeconfig from Kubernetes control plane
+  hosts: control_plane
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Read Kubernetes admin kubeconfig
+      slurp:
+        src: /etc/kubernetes/admin.conf
+      register: kubeconfig_file
+
+    - name: Save kubeconfig temporarily on Ansible controller
+      copy:
+        content: "{{ kubeconfig_file.content | b64decode }}"
+        dest: "/tmp/{{ inventory_hostname }}-admin.conf"
+        mode: "0600"
+      delegate_to: localhost
+      become: false
+
+
+- name: Register Kubernetes cluster in Argo CD
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    cluster_name: "{{ groups['control_plane'][0] }}"
+    kubeconfig_path: "/tmp/{{ groups['control_plane'][0] }}-admin.conf"
+
+  tasks:
+    - name: Check cluster connectivity
+      command: >
+        kubectl --kubeconfig {{ kubeconfig_path }}
+        get nodes
+      register: cluster_check
+      changed_when: false
+
+    - name: Show cluster nodes
+      debug:
+        var: cluster_check.stdout_lines
+
+    - name: Register cluster with Argo CD
+      command: >
+        argocd cluster add kubernetes-admin@kubernetes
+        --kubeconfig {{ kubeconfig_path }}
+        --name {{ cluster_name }}
+        --label cluster-type=workload
+        --yes
+      register: argocd_register
