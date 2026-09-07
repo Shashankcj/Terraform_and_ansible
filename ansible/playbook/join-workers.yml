@@ -5,6 +5,11 @@
 
   tasks:
 
+    - name: Check if worker is already joined to Kubernetes
+      ansible.builtin.stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf
+
     - name: Get Kubernetes join command from control plane
       ansible.builtin.command: kubeadm token create --print-join-command
       delegate_to: k8s-cp-1
@@ -14,3 +19,4 @@
 
     - name: Join worker nodes
       ansible.builtin.command: "{{ join_command.stdout }}"
+      when: not kubelet_conf.stat.exists

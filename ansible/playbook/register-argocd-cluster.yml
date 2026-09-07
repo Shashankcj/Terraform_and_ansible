@@ -24,26 +24,48 @@
   gather_facts: false
 
   vars:
+    argocd_server: "{{ lookup('env', 'ARGOCD_SERVER') }}"
+    argocd_username: "{{ lookup('env', 'ARGOCD_USERNAME') }}"
+    argocd_password: "{{ lookup('env', 'ARGOCD_PASSWORD') }}"
     cluster_name: "{{ groups['control_plane'][0] }}"
     kubeconfig_path: "/tmp/{{ groups['control_plane'][0] }}-admin.conf"
 
   tasks:
+
+    - name: Login to Argo CD
+      command:
+        argv:
+          - argocd
+          - login
+          - "{{ argocd_server }}"
+          - --username
+          - "{{ argocd_username }}"
+          - --password
+          - "{{ argocd_password }}"
+          - --insecure
+      no_log: true
+
     - name: Check cluster connectivity
-      command: >
-        kubectl --kubeconfig {{ kubeconfig_path }}
-        get nodes
-      register: cluster_check
+      command:
+        argv:
+          - kubectl
+          - --kubeconfig
+          - "{{ kubeconfig_path }}"
+          - get
+          - nodes
       changed_when: false
 
-    - name: Show cluster nodes
-      debug:
-        var: cluster_check.stdout_lines
-
     - name: Register cluster with Argo CD
-      command: >
-        argocd cluster add kubernetes-admin@kubernetes
-        --kubeconfig {{ kubeconfig_path }}
-        --name {{ cluster_name }}
-        --label cluster-type=workload
-        --yes
-      register: argocd_register
+      command:
+        argv:
+          - argocd
+          - cluster
+          - add
+          - kubernetes-admin@kubernetes
+          - --kubeconfig
+          - "{{ kubeconfig_path }}"
+          - --name
+          - "{{ cluster_name }}"
+          - --label
+          - cluster-type=workload
+          - --yes
