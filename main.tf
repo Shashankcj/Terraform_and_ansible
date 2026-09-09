@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "control_plane" {
-  count = var.control_plane_count
+  count = var.cluster_count * var.control_plane_count
 
-  name        = "k8s-cp-${count.index + 1}"
+  name        = "k8s-cluster-${floor(count.index / var.control_plane_count) + 1}-cp-${(count.index % var.control_plane_count) + 1}"
   target_node = var.proxmox_node
 
   clone      = var.template_name
@@ -33,13 +33,13 @@ resource "proxmox_vm_qemu" "control_plane" {
     bridge = "vmbr1"
   }
   # Static IP configuration
-  ipconfig0 = "ip=${var.control_plane_ips[count.index]}/${var.network_prefix},gw=${var.network_gateway}"
+  #ipconfig0 = "ip=${var.control_plane_ips[count.index]}/${var.network_prefix},gw=${var.network_gateway}"
 }
 
 resource "proxmox_vm_qemu" "worker" {
-  count = var.worker_count
+  count = var.cluster_count * var.worker_count
 
-  name        = "k8s-worker-${count.index + 1}"
+  name        = "k8s-cluster-${floor(count.index / var.worker_count) + 1}-worker-${(count.index % var.worker_count) + 1}"
   target_node = var.proxmox_node
 
   clone      = var.template_name
@@ -73,5 +73,5 @@ resource "proxmox_vm_qemu" "worker" {
     bridge = "vmbr1"
   }
   # Static IP configuration
-  ipconfig0 = "ip=${var.worker_ips[count.index]}/${var.network_prefix},gw=${var.network_gateway}"
+  #ipconfig0 = "ip=${var.worker_ips[count.index]}/${var.network_prefix},gw=${var.network_gateway}"
 }

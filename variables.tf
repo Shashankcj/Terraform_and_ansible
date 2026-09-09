@@ -14,6 +14,12 @@ variable "template_name" {
   type        = string
   default     = "Ubuntu-k-test"
 }
+variable "cluster_count" {
+  description = "Number of Kubernetes clusters"
+  type        = number
+  default     = 2
+}
+
 
 variable "control_plane_count" {
   description = "Number of Kubernetes control-plane VMs"
@@ -26,6 +32,9 @@ variable "worker_count" {
   type        = number
   default     = 2
 }
+
+
+
 variable "control_plane_ips" {
   type = list(string)
 }

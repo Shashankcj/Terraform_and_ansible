@@ -1,5 +1,7 @@
 control_plane_count = 1
 worker_count        = 2
+cluster_count       = 2
+
 control_plane_ips = [
   "10.99.1.205",
   "10.99.1.206",

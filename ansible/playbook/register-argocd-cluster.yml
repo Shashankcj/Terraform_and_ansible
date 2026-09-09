@@ -27,11 +27,11 @@
     argocd_server: "{{ lookup('env', 'ARGOCD_SERVER') }}"
     argocd_username: "{{ lookup('env', 'ARGOCD_USERNAME') }}"
     argocd_password: "{{ lookup('env', 'ARGOCD_PASSWORD') }}"
-    cluster_name: "{{ groups['control_plane'][0] }}"
-    kubeconfig_path: "/tmp/{{ groups['control_plane'][0] }}-admin.conf"
+    cluster_control_planes:
+      - "{{ groups['cluster1_control_plane'][0] }}"
+      - "{{ groups['cluster2_control_plane'][0] }}"
 
   tasks:
-
     - name: Login to Argo CD
       command:
         argv:
@@ -43,16 +43,17 @@
           - --password
           - "{{ argocd_password }}"
           - --insecure
-      no_log: true
+      
 
     - name: Check cluster connectivity
       command:
         argv:
           - kubectl
           - --kubeconfig
-          - "{{ kubeconfig_path }}"
+          - "/tmp/{{ item }}-admin.conf"
           - get
           - nodes
+      loop: "{{ cluster_control_planes }}"
       changed_when: false
 
     - name: Register cluster with Argo CD
@@ -63,9 +64,16 @@
           - add
           - kubernetes-admin@kubernetes
           - --kubeconfig
-          - "{{ kubeconfig_path }}"
+          - "/tmp/{{ item }}-admin.conf"
           - --name
-          - "{{ cluster_name }}"
+          - "{{ item }}"
           - --label
           - cluster-type=workload
+          - --label
+          - "cilium-cluster-id={{ cluster_index + 1 }}"
+          - --label
+          - "cilium-cluster-name=cluster_{{ cluster_index + 1 }}"
           - --yes
+      loop: "{{ cluster_control_planes }}"
+      loop_control:
+        index_var: cluster_index
